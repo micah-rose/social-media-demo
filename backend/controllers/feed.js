@@ -80,6 +80,7 @@ exports.createPost = (req, res, next) => {
 exports.getPost = (req, res, next) => {
   const postId = req.params.postId;
   Post.findById(postId)
+    // .populate("creator") - there is a fix for this in a later lecture
     .then((post) => {
       if (!post) {
         const error = new Error("Could not find post!");

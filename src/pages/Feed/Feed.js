@@ -24,8 +24,8 @@ class Feed extends Component {
   componentDidMount() {
     fetch("http://localhost:8080/auth/status", {
       headers: {
-        Authorization: 'Bearer ' + this.props.token
-      }
+        Authorization: "Bearer " + this.props.token,
+      },
     })
       .then((res) => {
         if (res.status !== 200) {
@@ -56,8 +56,8 @@ class Feed extends Component {
     }
     fetch("http://localhost:8080/feed/posts?page=" + page, {
       headers: {
-        Authorization: "Bearer " + this.props.token
-      }
+        Authorization: "Bearer " + this.props.token,
+      },
     })
       .then((res) => {
         if (res.status !== 200) {
@@ -80,25 +80,25 @@ class Feed extends Component {
       .catch(this.catchError);
   };
 
-  statusUpdateHandler = event => {
+  statusUpdateHandler = (event) => {
     event.preventDefault();
-    fetch('http://localhost:8080/auth/status', {
-      method: 'PATCH',
+    fetch("http://localhost:8080/auth/status", {
+      method: "PATCH",
       headers: {
-        Authorization: 'Bearer ' + this.props.token,
-        'Content-Type': 'application/json'
+        Authorization: "Bearer " + this.props.token,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        status: this.state.status
-      })
+        status: this.state.status,
+      }),
     })
-      .then(res => {
+      .then((res) => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error("Can't update status!");
         }
         return res.json();
       })
-      .then(resData => {
+      .then((resData) => {
         console.log(resData);
       })
       .catch(this.catchError);
@@ -133,27 +133,43 @@ class Feed extends Component {
     formData.append("content", postData.content);
     formData.append("image", postData.image);
 
-    let url = "http://localhost:8080/feed/post";
-    let method = "POST";
-    if (this.state.editPost) {
-      url = "http://localhost:8080/feed/post/" + this.state.editPost._id;
-      method = "PUT";
-    }
+    let graphqlQuery = {
+      query: `
+        mutation: {
+          createPost(postInput: {title: "${resData.post.title}", content: "${resData.post.content}", imageUrl: "some url}) {
+            _id
+            title
+            content
+            imageUrl
+            creator {
+              name
+            }
+            createdAt
+          }
+        }
+      `,
+    };
 
-    fetch(url, {
-      method: method,
-      body: formData,
+    fetch("http://localhost:8080/graphql", {
+      method: "POST",
+      body: JSON.stringify(graphqlQuery),
       headers: {
-        Authorization: "Bearer " + this.props.token
-      }
+        Authorization: "Bearer " + this.props.token,
+        "Content-Type": "application/json",
+      },
     })
       .then((res) => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error("Creating or editing a post failed!");
-        }
         return res.json();
       })
       .then((resData) => {
+        if (resData.errors && resData.errors[0].status === 422) {
+          throw new Error(
+            "Validation failed. Make sure the email address isn't used yet!"
+          );
+        }
+        if (resData.errors) {
+          throw new Error("User login failed.");
+        }
         console.log(resData);
         const post = {
           _id: resData.post._id,
@@ -163,28 +179,28 @@ class Feed extends Component {
           createdAt: resData.post.createdAt,
         };
         this.setState((prevState) => {
-        //   let updatedPosts = [...prevState.posts];
-        //   if (prevState.editPost) {
-        //     const postIndex = prevState.posts.findIndex(
-        //       (p) => p._id === prevState.editPost._id
-        //     );
-        //     updatedPosts[postIndex] = post;
-        //   } else if (prevState.posts.length < 2) {
-        //     updatedPosts = prevState.posts.concat(post);
-        //   }
-        //   return {
-        //     posts: updatedPosts,
-        //     isEditing: false,
-        //     editPost: null,
-        //     editLoading: false,
-        //   };
-        // });
-        return {
-          isEditing: false,
-          editPost: null,
-          editLoading: false
-        };
-      });
+          //   let updatedPosts = [...prevState.posts];
+          //   if (prevState.editPost) {
+          //     const postIndex = prevState.posts.findIndex(
+          //       (p) => p._id === prevState.editPost._id
+          //     );
+          //     updatedPosts[postIndex] = post;
+          //   } else if (prevState.posts.length < 2) {
+          //     updatedPosts = prevState.posts.concat(post);
+          //   }
+          //   return {
+          //     posts: updatedPosts,
+          //     isEditing: false,
+          //     editPost: null,
+          //     editLoading: false,
+          //   };
+          // });
+          return {
+            isEditing: false,
+            editPost: null,
+            editLoading: false,
+          };
+        });
       })
       .catch((err) => {
         console.log(err);
@@ -206,8 +222,8 @@ class Feed extends Component {
     fetch("http://localhost:8080/feed/post/" + postId, {
       method: "DELETE",
       headers: {
-        Authorization: "Bearer " + this.props.token
-      }
+        Authorization: "Bearer " + this.props.token,
+      },
     })
       .then((res) => {
         if (res.status !== 200 && res.status !== 201) {

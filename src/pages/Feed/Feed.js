@@ -123,20 +123,21 @@ class Feed extends Component {
     this.setState({ isEditing: false, editPost: null });
   };
 
-  finishEditHandler = (postData) => {
+  finishEditHandler = postData => {
     this.setState({
-      editLoading: true,
+      editLoading: true
     });
-
     const formData = new FormData();
-    formData.append("title", postData.title);
-    formData.append("content", postData.content);
-    formData.append("image", postData.image);
+    formData.append('title', postData.title);
+    formData.append('content', postData.content);
+    formData.append('image', postData.image);
 
     let graphqlQuery = {
       query: `
-        mutation: {
-          createPost(postInput: {title: "${resData.post.title}", content: "${resData.post.content}", imageUrl: "some url}) {
+        mutation {
+          createPost(postInput: {title: "${postData.title}", content: "${
+        postData.content
+      }", imageUrl: "some url"}) {
             _id
             title
             content
@@ -147,68 +148,52 @@ class Feed extends Component {
             createdAt
           }
         }
-      `,
+      `
     };
 
-    fetch("http://localhost:8080/graphql", {
-      method: "POST",
+    fetch('http://localhost:8080/graphql', {
+      method: 'POST',
       body: JSON.stringify(graphqlQuery),
       headers: {
-        Authorization: "Bearer " + this.props.token,
-        "Content-Type": "application/json",
-      },
+        Authorization: 'Bearer ' + this.props.token,
+        'Content-Type': 'application/json'
+      }
     })
-      .then((res) => {
+      .then(res => {
         return res.json();
       })
-      .then((resData) => {
+      .then(resData => {
         if (resData.errors && resData.errors[0].status === 422) {
           throw new Error(
             "Validation failed. Make sure the email address isn't used yet!"
           );
         }
         if (resData.errors) {
-          throw new Error("User login failed.");
+          throw new Error('User login failed!');
         }
         console.log(resData);
         const post = {
-          _id: resData.post._id,
-          title: resData.post.title,
-          content: resData.post.content,
-          creator: resData.post.creator,
-          createdAt: resData.post.createdAt,
+          _id: resData.data.createPost._id,
+          title: resData.data.createPost.title,
+          content: resData.data.createPost.content,
+          creator: resData.data.createPost.creator,
+          createdAt: resData.data.createPost.createdAt
         };
-        this.setState((prevState) => {
-          //   let updatedPosts = [...prevState.posts];
-          //   if (prevState.editPost) {
-          //     const postIndex = prevState.posts.findIndex(
-          //       (p) => p._id === prevState.editPost._id
-          //     );
-          //     updatedPosts[postIndex] = post;
-          //   } else if (prevState.posts.length < 2) {
-          //     updatedPosts = prevState.posts.concat(post);
-          //   }
-          //   return {
-          //     posts: updatedPosts,
-          //     isEditing: false,
-          //     editPost: null,
-          //     editLoading: false,
-          //   };
-          // });
+        this.setState(prevState => {
           return {
             isEditing: false,
             editPost: null,
-            editLoading: false,
+            editLoading: false
           };
         });
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
         this.setState({
           isEditing: false,
           editPost: null,
           editLoading: false,
-          error: err,
+          error: err
         });
       });
   };

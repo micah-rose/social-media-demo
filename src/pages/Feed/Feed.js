@@ -188,7 +188,7 @@ class Feed extends Component {
           graphqlQuery = {
             query: `
             mutation {
-              updatePost(postInput: {id: "${this.state.editPost._id}", title: "${postData.title}", content: "${postData.content}", imageUrl: "${imageUrl}"}) {
+              updatePost(id: "${this.state.editPost._id}", postInput: {title: "${postData.title}", content: "${postData.content}", imageUrl: "${imageUrl}"}) {
                 _id
                 title
                 content
